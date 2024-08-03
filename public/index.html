@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Proxy Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px 12px; border: 1px solid #ddd; }
+    th { background-color: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h1>Minecraft Proxy Dashboard</h1>
+  <h2>Connection Attempts</h2>
+  <table id="connections">
+    <thead>
+      <tr>
+        <th>IP Address</th>
+        <th>Username</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h2>Banned IPs</h2>
+  <table id="banned">
+    <thead>
+      <tr>
+        <th>IP Address</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h2>Attack Logs</h2>
+  <table id="attacks">
+    <thead>
+      <tr>
+        <th>IP Address</th>
+        <th>Attack Type</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on('login', (data) => {
+      const table = document.getElementById('connections').getElementsByTagName('tbody')[0];
+      const row = table.insertRow();
+      const cell1 = row.insertCell(0);
+      const cell2 = row.insertCell(1);
+      cell1.textContent = data.ip;
+      cell2.textContent = data.username;
+    });
+
+    socket.on('ban', (data) => {
+      const table = document.getElementById('banned').getElementsByTagName('tbody')[0];
+      const row = table.insertRow();
+      const cell = row.insertCell(0);
+      cell.textContent = data.ip;
+    });
+
+    socket.on('attack', (data) => {
+      const table = document.getElementById('attacks').getElementsByTagName('tbody')[0];
+      const row = table.insertRow();
+      const cell1 = row.insertCell(0);
+      const cell2 = row.insertCell(1);
+      const cell3 = row.insertCell(2);
+      cell1.textContent = data.ip;
+      cell2.textContent = data.type;
+      cell3.textContent = new Date(data.timestamp).toLocaleString();
+    });
+
+    fetch('/api/banned')
+      .then(response => response.json())
+      .then(data => {
+        const table = document.getElementById('banned').getElementsByTagName('tbody')[0];
+        data.forEach(ip => {
+          const row = table.insertRow();
+          const cell = row.insertCell(0);
+          cell.textContent = ip;
+        });
+      });
+
+    fetch('/api/attacks')
+      .then(response => response.json())
+      .then(data => {
+        const table = document.getElementById('attacks').getElementsByTagName('tbody')[0];
+        data.forEach(log => {
+          const row = table.insertRow();
+          const cell1 = row.insertCell(0);
+          const cell2 = row.insertCell(1);
+          const cell3 = row.insertCell(2);
+          cell1.textContent = log.ip;
+          cell2.textContent = log.type;
+          cell3.textContent = new Date(log.timestamp).toLocaleString();
+        });
+      });
+  </script>
+</body>
+</html>
